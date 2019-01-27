@@ -1,6 +1,6 @@
 const Websocket = require('ws');
 const P2P_PORT = process.env.P2P_PORT || 5001;
-// if there are peers already assign them or otherwise set it enpty
+// if there are peers already assign them, otherwise set it empty
 const peers = process.env.PEERS ? process.env.PEERS.split(',') : [];
 
 class P2pServer {
@@ -8,7 +8,7 @@ class P2pServer {
 		this.blockchain = blockchain;
 		this.sockets = [];
 	}
-	// start the p2p server
+	// starts the server
 	listen() {
 		// create server
 		const server = new Websocket.Server({ port: P2P_PORT });
