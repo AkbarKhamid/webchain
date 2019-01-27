@@ -1,10 +1,13 @@
 const SHA256 = require('crypto-js/sha256');
+const { DIFFICULTY, MINE_RATE } = require('../config');
 
 class Block {
-	constructor(timeStamp, lastHash, hash, data) {
+	constructor(timeStamp, lastHash, hash, data, nonce, difficulty) {
 		this.timeStamp = timeStamp;
 		this.lastHash = lastHash;
 		this.hash = hash;
+		this.nonce = nonce;
+		this.difficulty = difficulty || DIFFICULTY; // for the genesis block
 		this.data = data;
 	}
 
@@ -12,29 +15,44 @@ class Block {
 		return `Block -
       TimeStamp : ${this.timeStamp}
       Last Hash : ${this.lastHash}
-      Hash      : ${this.hash}
-      Data      : ${this.data}`;
+			Hash      : ${this.hash}
+			Nonce 		: ${this.nonce}
+			Difficulty: ${this.difficulty}
+			Data      : ${this.data}`;
 	}
 
 	static genesis() {
-		return new this('Genesis Time', '------', 'f1r57-h45h', []);
+		return new this('Genesis Time', '------', 'f1r57-h45h', [], 0, DIFFICULTY);
 	}
 
 	static mineBlock(lastBlock, data) {
-		const timeStamp = Date.now();
+		let hash, timeStamp, nonce;
 		const lastHash = lastBlock.hash;
-		const hash = Block.hash(timeStamp, lastHash, data);
+		let { difficulty } = lastBlock;
+		// PROOF OF WORK ALGORITHM
+		do {
+			nonce++;
+			timeStamp = Date.now();
+			difficulty = Block.adjustDifficulty(lastBlock, timeStamp);
+			hash = Block.hash(timeStamp, lastHash, data, nonce, difficulty);
+		} while (hash.substring(0, difficulty) !== '0'.repeat(difficulty));
 
-		return new this(timeStamp, lastHash, hash, data);
+		return new this(timeStamp, lastHash, hash, data, nonce, difficulty);
 	}
 
-	static hash(timeStamp, lastHash, data) {
-		return SHA256(`${timeStamp}${lastHash}${data}`).toString();
+	static hash(timeStamp, lastHash, data, nonce, difficulty) {
+		return SHA256(`${timeStamp}${lastHash}${data}${nonce}${difficulty}`).toString();
 	}
 
 	static currentBlockHash(block) {
-		const { timeStamp, lastHash, data } = block;
-		return Block.hash(timeStamp, lastHash, data);
+		const { timeStamp, lastHash, data, nonce, difficulty } = block;
+		return Block.hash(timeStamp, lastHash, data, nonce, difficulty);
+	}
+
+	static adjustDifficulty(lastBlock, currentTime) {
+		let { difficulty } = lastBlock;
+		difficulty = lastBlock.timeStamp + MINE_RATE > currentTime ? difficulty + 1 : difficulty - 1;
+		return difficulty;
 	}
 }
 
