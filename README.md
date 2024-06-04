@@ -1,6 +1,5 @@
 #### webchain
-Blockchain written in js while learning and for using as a reference
-It follows OOP and TDD principles and built on top of websockets.
+Blockchain written in js for fun
 Dependencies:
 - express
 - ws (websocket)
